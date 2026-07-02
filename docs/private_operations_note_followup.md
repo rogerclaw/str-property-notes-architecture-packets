@@ -3,12 +3,13 @@
 ## Regression
 
 The repaired live Apple Note still failed the real user need: it looked like a
-validator/process/audit artifact instead of a concise property-manager
-operations note.
+validator/process/audit artifact instead of the useful deluxe dossier structure
+Charles expected from the successful 518 Vernon note.
 
-This follow-up tightens the architecture target. A successful publish must
+This follow-up resets the architecture target. A successful publish must
 produce a private live note that is useful to Charles, a cleaner, or a helper
-standing at the property.
+standing at the property, using the 518-style deluxe dossier shape rather than
+a narrow validator-safe shape.
 
 ## Boundary
 
@@ -37,6 +38,37 @@ docs must remain redacted and must not expose raw private values.
 - invoice/evidence-supports-context filler
 - generic owner snapshot filler
 - unknown-negative rows dressed up as content
+- dry-run, gate, execute report, backend sync, local cache, ops/progress, or
+  private/backend row commentary
+
+## Target Private Note Structure
+
+The private Apple Note target is:
+
+- `[Property Address / Property Name] - Deluxe Dossier`
+- Access & Codes
+- Contacts
+- Wi-Fi / Systems
+- Field Basics
+- Links
+- Evidence / Refresh Notes
+
+Evidence / Refresh Notes should contain:
+
+- Occupancy & Money
+- Current / Upcoming Stays
+- Owner & Message Activity
+- Charles Visit Stats
+- Difficulty Ranking
+- Airbnb / Review Signal
+- Recent Notable Events
+- Active Ops Watchlist
+- Management Notes
+- Source / Refresh Notes
+
+The Evidence / Refresh Notes section is allowed in the private note when it is
+field-useful manager context. It is not allowed to become a process log,
+validator report, or public audit artifact.
 
 ## Required Pre-Publish Source Tasks
 
@@ -56,12 +88,13 @@ The source sweep must resolve or explicitly mark these Venice-only facts:
 The final live readback should be checked against a small forbidden-phrase list
 and a positive field-note contract:
 
-- top sections are Access & Codes, Wi-Fi / Systems, Contacts, Needs
-  Confirmation, Field Basics, Current / Upcoming Stays, Operations Notes,
-  Business Snapshot, and Refresh / Source Coverage
+- top sections are Access & Codes, Contacts, Wi-Fi / Systems, Field Basics,
+  Links, and Evidence / Refresh Notes
+- evidence subsections match the 518-style list above
 - access, Wi-Fi, owner, cleaner, and stay facts appear as usable facts, not as
   evidence commentary
-- missing facts appear only in the short Needs Confirmation section
+- missing or candidate facts appear only in manager/source refresh notes until
+  confirmed
 - exactly one active property note exists after publish
 - prior bad notes are archived
 - no other property is changed

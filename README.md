@@ -18,19 +18,23 @@ Apple Note from being published as "verified" again.
 
 Focus areas:
 
-1. Product separation: `build_private_operations_note(...)` builds the private
-   live Apple Note shape, while `build_public_audit_artifact(...)` builds a
-   shareable audit/log artifact.
+1. Product separation: `build_private_operations_note(...)` /
+   `build_private_deluxe_dossier_note(...)` builds the private live Apple Note
+   shape, while `build_public_audit_artifact(...)` builds a shareable audit/log
+   artifact.
 2. Device-visible validation: the private semantic gate must run against the
    live Apple Notes readback body, not only generated HTML or local metadata.
 3. Manager usefulness: section headings alone should not pass if the private
    body is dry-run/process prose, generic filler, source-policy commentary, or
    unknown-negative rows.
-4. Private-note contract: required private sections are `Access & Codes`,
-   `Wi-Fi / Systems`, `Contacts`, `Other Property Contacts`,
-   `Needs Confirmation`, `Field Basics`, `Current / Upcoming Stays`,
-   `Operations Notes`, `Business Snapshot`, and
-   `Refresh / Source Coverage`.
+4. Private-note contract: the private Apple Note target is the 518 Vernon-style
+   deluxe dossier, not a stripped validator-safe shape. The required top
+   sections are `Access & Codes`, `Contacts`, `Wi-Fi / Systems`,
+   `Field Basics`, `Links`, and `Evidence / Refresh Notes`; the evidence
+   section must include `Occupancy & Money`, `Current / Upcoming Stays`,
+   `Owner & Message Activity`, `Charles Visit Stats`, `Difficulty Ranking`,
+   `Airbnb / Review Signal`, `Recent Notable Events`,
+   `Active Ops Watchlist`, `Management Notes`, and `Source / Refresh Notes`.
 5. Fact-slot resolution: source outcomes are explicit states
    `resolved_verified`, `private_value_present`, `unresolved_conflict`,
    `missing_after_full_sweep`, `candidate_unconfirmed`, and `not_applicable`.
@@ -42,10 +46,11 @@ Focus areas:
    title plus property marker/address/name, prove archive creation, prove the
    old id is no longer active, require live readback, run the private semantic
    gate on readback, and run the public redaction gate on closeout.
-8. Regression tests: tests cover audit-shape rejection, source/process rows,
-   generic filler, Needs Confirmation placement, candidate labeling, owner
-   conflict, access-code separation, redaction placeholders, public redaction,
-   duplicate blocking, archive proof, and live readback.
+8. Regression tests: tests cover a positive sanitized 518-style deluxe dossier
+   fixture, audit-shape rejection, source/process rows, generic filler,
+   confirmation placement, candidate labeling, owner conflict, access-code
+   separation, redaction placeholders, public redaction, duplicate blocking,
+   archive proof, and live readback.
 
 ## Contents
 

@@ -13,6 +13,76 @@ import str_property_fact_registry as registry
 
 
 GOOD_BODY = registry.build_private_operations_note("sample_property")
+FIVE_EIGHTEEN_SHAPED_BODY = """<h1>123 Example St, Sample City, ST 00000 - Deluxe Dossier</h1>
+<h2>Access &amp; Codes</h2>
+<ul>
+<li><b>Front door guest code:</b> Door/keypad code uses SAMPLE_GUEST_ACCESS_VALUE.</li>
+<li><b>Lock admin/programming code:</b> Admin/programming code uses SAMPLE_ADMIN_ACCESS_VALUE.</li>
+</ul>
+<h2>Contacts</h2>
+<ul>
+<li><b>Owner - Owner A:</b> SAMPLE_OWNER_CONTACT.</li>
+<li><b>Cleaner / turnover - Cleaner A:</b> SAMPLE_CLEANER_CONTACT.</li>
+</ul>
+<h2>Wi-Fi / Systems</h2>
+<ul>
+<li><b>Wi-Fi network:</b> Network: SAMPLE-NETWORK.</li>
+<li><b>Wi-Fi password:</b> Password uses SAMPLE_WIFI_SECRET.</li>
+</ul>
+<h2>Field Basics</h2>
+<ul>
+<li><b>Address:</b> 123 Example St, Sample City.</li>
+<li><b>Parking:</b> Driveway/curb plan is in the field note.</li>
+<li><b>Trash:</b> Trash cans are on the right side facing the house; normal pickup Tuesday.</li>
+</ul>
+<h2>Links</h2>
+<ul>
+<li><b>Airbnb listing:</b> Airbnb listing link is saved for manager review.</li>
+<li><b>House manual:</b> House manual, permit, and map links are grouped here for field use.</li>
+</ul>
+<h2>Evidence / Refresh Notes</h2>
+<h3>Occupancy &amp; Money</h3>
+<ul>
+<li><b>YTD bookings:</b> Bookings, nights, revenue trend, and occupancy context are summarized here.</li>
+</ul>
+<h3>Current / Upcoming Stays</h3>
+<ul>
+<li><b>Current:</b> No current in-house accepted stay in the sample packet.</li>
+<li><b>Next 1:</b> Next accepted stay is held in the reservation system; refresh before guest-specific action.</li>
+</ul>
+<h3>Owner &amp; Message Activity</h3>
+<ul>
+<li><b>Owner thread:</b> Owner, cleaner, and guest message activity is grouped by role before action.</li>
+</ul>
+<h3>Charles Visit Stats</h3>
+<ul>
+<li><b>Charles visits:</b> Visit count and last-seen status summarize field recency for this property.</li>
+</ul>
+<h3>Difficulty Ranking</h3>
+<ul>
+<li><b>Difficulty:</b> Medium manager difficulty based on access, turnover, and owner-contact complexity.</li>
+</ul>
+<h3>Airbnb / Review Signal</h3>
+<ul>
+<li><b>Airbnb reviews:</b> Review/rating signal is summarized here for manager awareness.</li>
+</ul>
+<h3>Recent Notable Events</h3>
+<ul>
+<li><b>Recent event:</b> Latest maintenance, guest, or owner item is summarized in manager language.</li>
+</ul>
+<h3>Active Ops Watchlist</h3>
+<ul>
+<li><b>Watchlist:</b> Confirm access and turnover readiness when the next same-day arrival appears.</li>
+</ul>
+<h3>Management Notes</h3>
+<ul>
+<li><b>Manager note:</b> Keep owner escalation, cleaner dispatch, and guest access facts separated by role.</li>
+</ul>
+<h3>Source / Refresh Notes</h3>
+<ul>
+<li><b>Refresh:</b> Refreshed from current note, locked property records, owner/message sources, reservations, house manual/docs, and maintenance artifacts.</li>
+</ul>
+"""
 GOOD_CLOSEOUT = """# Public closeout
 
 - Private operations note semantic gate: PASS
@@ -25,8 +95,14 @@ class PrivateOperationsSemanticGateTests(unittest.TestCase):
     def test_good_private_operations_note_passes(self) -> None:
         self.assertTrue(semantic.evaluate_body(GOOD_BODY)["ok"])
 
+    def test_sanitized_518_deluxe_dossier_fixture_passes(self) -> None:
+        result = semantic.evaluate_body(FIVE_EIGHTEEN_SHAPED_BODY)
+        self.assertTrue(result["ok"], result["findings"])
+        self.assertIn("Evidence / Refresh Notes", result["section_row_counts"])
+        self.assertIn("Source / Refresh Notes", result["section_row_counts"])
+
     def test_rejects_audit_report_shape(self) -> None:
-        body = GOOD_BODY.replace("<h2>Operations Notes</h2>", "<h2>Gate Summary</h2>", 1)
+        body = GOOD_BODY.replace("<h2>Evidence / Refresh Notes</h2>", "<h2>Gate Summary</h2>", 1)
         result = semantic.evaluate_body(body)
         self.assertFalse(result["ok"])
         self.assertIn("private_audit_shape", {row["check"] for row in result["findings"]})
@@ -38,7 +114,7 @@ class PrivateOperationsSemanticGateTests(unittest.TestCase):
         self.assertIn("forbidden_process_text", {row["check"] for row in result["findings"]})
 
     def test_rejects_generic_filler(self) -> None:
-        body = GOOD_BODY.replace("Confirm the guest code works before a same-day arrival or dispatch.", "Owner is responsive and routine maintenance normal.")
+        body = GOOD_BODY.replace("Latest maintenance, guest, or owner item is summarized in manager language.", "Owner is responsive and routine maintenance normal.")
         result = semantic.evaluate_body(body)
         self.assertFalse(result["ok"])
         self.assertIn("generic_filler", {row["check"] for row in result["findings"]})
@@ -50,8 +126,8 @@ class PrivateOperationsSemanticGateTests(unittest.TestCase):
         candidate_slots.append(
             {
                 "slot_id": "contact.local_helper.candidate",
-                "section": "Needs Confirmation",
-                "target_section": "Needs Confirmation",
+                "section": "Management Notes",
+                "target_section": "Management Notes",
                 "label": "CANDIDATE - local helper",
                 "state": "candidate_unconfirmed",
                 "public_summary": "CANDIDATE appears in owner-message context, not promoted.",
@@ -74,8 +150,8 @@ class FactSlotResolutionTests(unittest.TestCase):
         slots.append(
             {
                 "slot_id": "contact.vendor.possible",
-                "section": "Needs Confirmation",
-                "target_section": "Needs Confirmation",
+                "section": "Management Notes",
+                "target_section": "Management Notes",
                 "label": "possible vendor",
                 "state": "candidate_unconfirmed",
                 "role": "vendor",
@@ -167,7 +243,7 @@ class FreshReplaceModelTests(unittest.TestCase):
     def identity(self) -> fresh_replace.PropertyIdentity:
         return fresh_replace.PropertyIdentity(
             property_id="sample_property",
-            title="Sample Property Dossier",
+            title="123 Example St, Sample City, ST 00000 - Deluxe Dossier",
             marker="sample_property",
             address="123 Example St",
             name="Sample Property",
@@ -176,7 +252,7 @@ class FreshReplaceModelTests(unittest.TestCase):
     def note(self, note_id: str = "old-note") -> dict[str, str]:
         return {
             "id": note_id,
-            "title": "Sample Property Dossier",
+            "title": "123 Example St, Sample City, ST 00000 - Deluxe Dossier",
             "folder": "STR Property Information",
             "body": "Sample Property at 123 Example St sample_property.",
             "property_marker": "sample_property",

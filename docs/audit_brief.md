@@ -12,8 +12,9 @@ the live Apple Notes readback body itself passes semantic/usefulness checks.
 
 A follow-up regression showed that this is still not enough if the note reads
 like a validator, audit packet, evidence receipt, or process transcript. The
-private live note must preserve source-backed operational facts and be useful as
-an onsite field note. Redaction applies to public artifacts, not to the private
+private live note must return to the useful 518 Vernon-style deluxe dossier:
+compact field-useful sections first, followed by helpful Evidence / Refresh
+Notes manager context. Redaction applies to public artifacts, not to the private
 Apple Note.
 
 ## Final State
@@ -31,13 +32,18 @@ backend sync passed, and focused regression tests passed.
 - Private and public products are split explicitly:
   `build_private_operations_note(...)` is the private Apple Note product and
   `build_public_audit_artifact(...)` is the shareable audit/log product.
-- The private-note contract has only operations sections: Access & Codes,
-  Wi-Fi / Systems, Contacts, Other Property Contacts, Needs Confirmation, Field
-  Basics, Current / Upcoming Stays, Operations Notes, Business Snapshot, and
-  Refresh / Source Coverage.
+- The private-note contract is the 518-style deluxe dossier, with top sections:
+  Access & Codes, Contacts, Wi-Fi / Systems, Field Basics, Links, and
+  Evidence / Refresh Notes.
+- Evidence / Refresh Notes is allowed and expected in the private Apple Note
+  when it is useful manager context. It must include Occupancy & Money,
+  Current / Upcoming Stays, Owner & Message Activity, Charles Visit Stats,
+  Difficulty Ranking, Airbnb / Review Signal, Recent Notable Events, Active Ops
+  Watchlist, Management Notes, and Source / Refresh Notes.
 - The private semantic gate rejects audit/process/source/gate wording, source
   paths, generic filler, public redaction placeholders in required private
-  fields, and MISSING/not found/candidate language outside Needs Confirmation.
+  fields, and MISSING/not found/candidate language outside manager/source
+  refresh notes.
 - Fact slots use explicit resolution states:
   `resolved_verified`, `private_value_present`, `unresolved_conflict`,
   `missing_after_full_sweep`, `candidate_unconfirmed`, and `not_applicable`.
@@ -58,8 +64,8 @@ backend sync passed, and focused regression tests passed.
    rows still be passed into the private Apple Note path?
 2. Are the private semantic forbidden-token checks too brittle, too broad, or
    easy to bypass?
-3. Does the positive section contract prove onsite usefulness, or only token
-   presence?
+3. Does the positive 518-style deluxe dossier contract prove onsite usefulness,
+   or only token presence?
 4. Are fact-slot states sufficient for owner email conflicts, missing phones,
    admin/programming access codes, candidate contacts, and cleaner/owner
    separation?
@@ -68,5 +74,5 @@ backend sync passed, and focused regression tests passed.
 6. Are public redaction gates sufficient for progress artifacts and GitHub
    packets?
 7. What tests should be added before rolling this to more properties?
-8. What positive structure should prove the live note is actually useful to an
-   onsite property manager?
+8. Does the packet keep the useful Evidence / Refresh Notes sections while
+   still excluding process/audit/debug junk from the private note?

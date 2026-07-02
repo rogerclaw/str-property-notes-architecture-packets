@@ -18,8 +18,8 @@ The system has already failed in two ways:
    note.
 
 Audit goal: determine whether the architecture and tests are now sufficient to
-ensure the private live Apple Note is a concise, useful operations note while
-public logs and GitHub artifacts remain redacted.
+ensure the private live Apple Note follows the useful 518 Vernon-style deluxe
+dossier structure while public logs and GitHub artifacts remain redacted.
 
 Please focus on these questions:
 
@@ -28,13 +28,17 @@ Please focus on these questions:
    still leak into the private Apple Note path?
 2. Does the private semantic gate prove onsite usefulness, or only absence of
    known bad phrases?
-3. Does the required private-note section contract exclude audit/report shape
-   while still allowing useful Refresh / Source Coverage rows?
+3. Does the required private-note section contract target the deluxe dossier
+   shape: Access & Codes, Contacts, Wi-Fi / Systems, Field Basics, Links, and
+   Evidence / Refresh Notes with Occupancy & Money, Current / Upcoming Stays,
+   Owner & Message Activity, Charles Visit Stats, Difficulty Ranking,
+   Airbnb / Review Signal, Recent Notable Events, Active Ops Watchlist,
+   Management Notes, and Source / Refresh Notes?
 4. Are the fact-slot resolution states strong enough for conflicting owner
    emails, missing phone numbers, admin/programming lock codes, candidate
    contacts, and cleaner-vs-owner separation?
-5. What tests should be added so a note shaped like an audit report cannot pass
-   as a property-manager operations note?
+5. What tests should be added so a note shaped like an audit report cannot pass,
+   while a useful 518-style Evidence / Refresh Notes section does pass?
 6. Does the fresh-replace/readback model adequately prove exactly one active
    note exists, prior bad notes are archived, the old id is gone, and readback
    was checked?

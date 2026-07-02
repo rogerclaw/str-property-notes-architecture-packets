@@ -14,18 +14,34 @@ import re
 from pathlib import Path
 from typing import Any
 
-PRIVATE_SECTIONS = [
+PRIVATE_TOP_LEVEL_SECTIONS = [
     "Access & Codes",
-    "Wi-Fi / Systems",
     "Contacts",
-    "Other Property Contacts",
-    "Needs Confirmation",
+    "Wi-Fi / Systems",
     "Field Basics",
-    "Current / Upcoming Stays",
-    "Operations Notes",
-    "Business Snapshot",
-    "Refresh / Source Coverage",
+    "Links",
+    "Evidence / Refresh Notes",
 ]
+
+EVIDENCE_REFRESH_SUBSECTIONS = [
+    "Occupancy & Money",
+    "Current / Upcoming Stays",
+    "Owner & Message Activity",
+    "Charles Visit Stats",
+    "Difficulty Ranking",
+    "Airbnb / Review Signal",
+    "Recent Notable Events",
+    "Active Ops Watchlist",
+    "Management Notes",
+    "Source / Refresh Notes",
+]
+
+PRIVATE_SECTIONS = PRIVATE_TOP_LEVEL_SECTIONS + EVIDENCE_REFRESH_SUBSECTIONS
+
+NEEDS_CONFIRMATION_ALLOWED_SECTIONS = {
+    "Management Notes",
+    "Source / Refresh Notes",
+}
 
 NEEDS_CONFIRMATION_TERMS = [
     "MISSING",
@@ -41,34 +57,36 @@ FORBIDDEN_PRIVATE_PROCESS_TERMS = [
     "audit report",
     "audit packet",
     "canonical review",
+    "canonical facts",
     "review packet",
     "validator",
     "validation",
     "gate result",
     "gate:",
-    "source receipt",
     "execute report",
     "backend sync",
     "local cache",
     "dry-run",
     "dry run",
-    "source-backed",
     "source path",
     "progress path",
     "ops/progress",
     "data/str_property_backend",
     "private backend",
     "private store",
+    "backend row",
+    "private row",
     "FAIL_BLOCKS_PUBLISH",
     "PASS_WITH_FALLBACK",
+    "failed-publish repair",
+    "process-heavy note",
     "no Apple Notes publish",
+    "no Apple Notes publish occurred",
     "publish remains blocked",
     "public artifact",
 ]
 
 AUDIT_SECTION_HEADINGS = [
-    "Evidence / Refresh Notes",
-    "Source / Refresh Notes",
     "Gate Summary",
     "Commands And Exit Codes",
     "Files Changed",
@@ -85,6 +103,7 @@ GENERIC_FILLER_PATTERNS = [
     re.compile(r"\bcontext remains sourced\b", re.I),
     re.compile(r"\bmessage-derived facts are staged\b", re.I),
     re.compile(r"\bsource-backed row pending\b", re.I),
+    re.compile(r"\bsource-backed row pending canonical review\b", re.I),
     re.compile(r"\bpublish readiness is determined\b", re.I),
 ]
 
@@ -156,6 +175,10 @@ def _contains_needs_confirmation_term(text: str) -> bool:
     return any(term.lower() in lowered for term in NEEDS_CONFIRMATION_TERMS)
 
 
+def _detail_count(sections: dict[str, list[str]], section: str) -> int:
+    return len([row for row in sections.get(section, []) if _has_detail(row)])
+
+
 def evaluate_public_redaction_gate(text: str, *, property_id: str = "sample_property") -> dict[str, Any]:
     findings: list[dict[str, str]] = []
     for pattern in PUBLIC_PRIVATE_VALUE_PATTERNS:
@@ -192,19 +215,18 @@ def evaluate_private_operations_note(body: str, *, property_id: str = "sample_pr
         if pattern.search(plain):
             findings.append({"check": "generic_filler", "message": f"generic filler matched: {pattern.pattern}"})
 
-    needs_confirmation_text = _section_text(sections, "Needs Confirmation")
     for section, rows in sections.items():
-        if section == "Needs Confirmation":
+        if section in NEEDS_CONFIRMATION_ALLOWED_SECTIONS:
             continue
         for row in rows:
             if _contains_needs_confirmation_term(row):
-                findings.append({"check": "needs_confirmation_placement", "message": f"missing/candidate/conflict language outside Needs Confirmation: {section}"})
+                findings.append({"check": "needs_confirmation_placement", "message": f"missing/candidate/conflict language outside management/source refresh notes: {section}"})
 
     access_text = _section_text(sections, "Access & Codes")
     if not re.search(r"(?i)\b(?:guest|front door|door/keypad)\b.*\bcode\b", access_text):
         findings.append({"check": "access_contract", "message": "guest/front-door access code row missing"})
     if not re.search(r"(?i)\b(?:admin|programming)\b.*\bcode\b", access_text):
-        findings.append({"check": "access_contract", "message": "admin/programming code row or Needs Confirmation decision missing"})
+        findings.append({"check": "access_contract", "message": "admin/programming code row or manager/source refresh decision missing"})
     access_values = re.findall(r"(?i)\b(?:code|pin)\s*(?:[:#=-]|uses)\s*([A-Z0-9_-]{4,})", access_text)
     if len(set(access_values)) < len(access_values):
         findings.append({"check": "access_contract", "message": "guest and admin/programming code values are not distinct"})
@@ -230,27 +252,49 @@ def evaluate_private_operations_note(body: str, *, property_id: str = "sample_pr
         if marker.lower() not in field_text.lower():
             findings.append({"check": "field_basics_contract", "message": f"missing field basic: {marker}"})
 
+    links_text = _section_text(sections, "Links")
+    if not re.search(r"(?i)\b(?:airbnb|house manual|manual|listing|map|permit)\b", links_text):
+        findings.append({"check": "links_contract", "message": "links section lacks manager-useful listing/manual/map/permit link context"})
+    if not _has_detail(links_text):
+        findings.append({"check": "links_contract", "message": "links section lacks usable private-note detail"})
+
+    occupancy_text = _section_text(sections, "Occupancy & Money")
+    if not re.search(r"(?i)\b(?:YTD|year to date|trailing|revenue|bookings|nights|occupancy)\b", occupancy_text):
+        findings.append({"check": "occupancy_money_contract", "message": "occupancy/money subsection lacks booking/revenue/nights context"})
+
     stay_text = _section_text(sections, "Current / Upcoming Stays")
     if not re.search(r"(?i)\bCurrent\b", stay_text) or not re.search(r"(?i)\bNext\b", stay_text):
         findings.append({"check": "stay_contract", "message": "current and next stay rows are required"})
 
-    operations_text = _section_text(sections, "Operations Notes")
-    if len([row for row in sections.get("Operations Notes", []) if _has_detail(row)]) < 2:
-        findings.append({"check": "operations_contract", "message": "operations notes need at least two actionable rows"})
+    owner_message_text = _section_text(sections, "Owner & Message Activity")
+    if not re.search(r"(?i)\b(?:owner|message|cleaner|guest)\b", owner_message_text):
+        findings.append({"check": "owner_message_contract", "message": "owner/message activity subsection lacks message context"})
 
-    business_text = _section_text(sections, "Business Snapshot")
-    if not re.search(r"(?i)\b(?:YTD|year to date|trailing|revenue|bookings|nights)\b", business_text):
-        findings.append({"check": "business_contract", "message": "business snapshot lacks booking/revenue/nights context"})
+    visit_text = _section_text(sections, "Charles Visit Stats")
+    if not re.search(r"(?i)\bCharles\b", visit_text) or not re.search(r"(?i)\bvisit\b", visit_text):
+        findings.append({"check": "charles_visit_contract", "message": "Charles visit stats subsection lacks visit context"})
 
-    refresh_rows = sections.get("Refresh / Source Coverage") or []
-    refresh_text = _section_text(sections, "Refresh / Source Coverage")
-    if not 1 <= len(refresh_rows) <= 3:
-        findings.append({"check": "refresh_contract", "message": "Refresh / Source Coverage must be short (1-3 rows)"})
-    if re.search(r"(?i)\b(?:ops/progress|gate|audit|receipt|source body|command|exit code)\b", refresh_text):
-        findings.append({"check": "refresh_contract", "message": "refresh section contains process/source/audit prose"})
+    difficulty_text = _section_text(sections, "Difficulty Ranking")
+    if not re.search(r"(?i)\b(?:difficulty|ranking|rank|easy|medium|hard|complex)\b", difficulty_text):
+        findings.append({"check": "difficulty_contract", "message": "difficulty ranking subsection lacks ranking context"})
 
-    if needs_confirmation_text:
-        for row in sections.get("Needs Confirmation", []):
+    review_text = _section_text(sections, "Airbnb / Review Signal")
+    if not re.search(r"(?i)\bAirbnb\b", review_text) or not re.search(r"(?i)\b(?:review|rating|guest signal)\b", review_text):
+        findings.append({"check": "review_signal_contract", "message": "Airbnb/review subsection lacks review signal"})
+
+    for subsection in ["Recent Notable Events", "Active Ops Watchlist", "Management Notes"]:
+        if _detail_count(sections, subsection) < 1:
+            findings.append({"check": "evidence_refresh_contract", "message": f"{subsection} needs at least one useful manager row"})
+
+    source_rows = sections.get("Source / Refresh Notes") or []
+    source_text = _section_text(sections, "Source / Refresh Notes")
+    if not 1 <= len(source_rows) <= 4:
+        findings.append({"check": "source_refresh_contract", "message": "Source / Refresh Notes must be short (1-4 rows)"})
+    if re.search(r"(?i)\b(?:ops/progress|gate|audit|receipt|source body|command|exit code|backend sync|local cache|validator|validation)\b", source_text):
+        findings.append({"check": "source_refresh_contract", "message": "source refresh section contains process/audit/debug prose"})
+
+    for section in NEEDS_CONFIRMATION_ALLOWED_SECTIONS:
+        for row in sections.get(section, []):
             if re.search(r"(?i)\bcandidate\b", row) and not re.search(r"\bCANDIDATE\b", row):
                 findings.append({"check": "candidate_labeling", "message": "candidate facts must be labeled CANDIDATE"})
 

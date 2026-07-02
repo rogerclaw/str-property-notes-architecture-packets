@@ -10,13 +10,17 @@ from typing import Any
 
 try:  # Allow both direct packet imports and package-style imports.
     from property_note_semantic_quality import (
+        EVIDENCE_REFRESH_SUBSECTIONS,
         PRIVATE_SECTIONS,
+        PRIVATE_TOP_LEVEL_SECTIONS,
         evaluate_private_operations_note,
         evaluate_public_redaction_gate,
     )
 except ImportError:  # pragma: no cover
     from .property_note_semantic_quality import (
+        EVIDENCE_REFRESH_SUBSECTIONS,
         PRIVATE_SECTIONS,
+        PRIVATE_TOP_LEVEL_SECTIONS,
         evaluate_private_operations_note,
         evaluate_public_redaction_gate,
     )
@@ -184,8 +188,8 @@ def sample_fact_slots() -> list[dict[str, Any]]:
         },
         {
             "slot_id": "contact.vendor.design_candidate",
-            "section": "Other Property Contacts",
-            "target_section": "Needs Confirmation",
+            "section": "Management Notes",
+            "target_section": "Management Notes",
             "label": "CANDIDATE - design/vendor contact",
             "state": "candidate_unconfirmed",
             "value_for_private_note": "",
@@ -223,6 +227,26 @@ def sample_fact_slots() -> list[dict[str, Any]]:
             "subtype": "trash",
             "required": True,
         },
+        {
+            "slot_id": "links.airbnb",
+            "section": "Links",
+            "label": "Airbnb listing",
+            "state": "resolved_verified",
+            "value_for_private_note": "Airbnb listing link is saved for manager review.",
+            "public_summary": "Airbnb listing link present in private note.",
+            "subtype": "airbnb_listing",
+            "required": True,
+        },
+        {
+            "slot_id": "links.house_manual",
+            "section": "Links",
+            "label": "House manual",
+            "state": "resolved_verified",
+            "value_for_private_note": "House manual, permit, and map links are grouped here for field use.",
+            "public_summary": "House manual and field links present in private note.",
+            "subtype": "house_manual",
+            "required": True,
+        },
     ]
 
 
@@ -235,8 +259,8 @@ def evaluate_fact_slot_resolution(fact_slots: list[dict[str, Any] | FactSlot]) -
             findings.append({"check": "fact_slot_state", "message": f"{slot.slot_id} has invalid state {slot.state}"})
         if slot.state == "private_value_present" and not slot.private_ref:
             findings.append({"check": "private_ref", "message": f"{slot.slot_id} private value lacks private_ref"})
-        if slot.state in NEEDS_CONFIRMATION_STATES and (slot.target_section or slot.section) != "Needs Confirmation":
-            findings.append({"check": "needs_confirmation_placement", "message": f"{slot.slot_id} must render only in Needs Confirmation"})
+        if slot.state in NEEDS_CONFIRMATION_STATES and (slot.target_section or slot.section) not in {"Management Notes", "Source / Refresh Notes"}:
+            findings.append({"check": "needs_confirmation_placement", "message": f"{slot.slot_id} must render only in a 518-style confirmation-safe evidence subsection"})
         if slot.state == "candidate_unconfirmed" and "CANDIDATE" not in slot.label:
             findings.append({"check": "candidate_contact_label", "message": f"{slot.slot_id} candidate lacks CANDIDATE label"})
 
@@ -250,8 +274,8 @@ def evaluate_fact_slot_resolution(fact_slots: list[dict[str, Any] | FactSlot]) -
 
     for slot in slots:
         if slot.required and slot.subtype == "phone" and slot.state == "missing_after_full_sweep":
-            if (slot.target_section or slot.section) != "Needs Confirmation":
-                findings.append({"check": "missing_phone", "message": f"{slot.slot_id} missing phone must stay in Needs Confirmation"})
+            if (slot.target_section or slot.section) not in {"Management Notes", "Source / Refresh Notes"}:
+                findings.append({"check": "missing_phone", "message": f"{slot.slot_id} missing phone must stay in a confirmation-safe evidence subsection"})
 
     guest_codes = [slot for slot in slots if slot.subtype == "guest_door_code" and slot.state == "private_value_present"]
     admin_codes = [slot for slot in slots if slot.subtype == "programming_admin_code" and slot.state == "private_value_present"]
@@ -268,7 +292,7 @@ def evaluate_fact_slot_resolution(fact_slots: list[dict[str, Any] | FactSlot]) -
     return {"ok": not findings, "fact_slot_states": sorted(FACT_SLOT_STATES), "findings": findings}
 
 
-def build_private_operations_note(property_id: str, fact_slots: list[dict[str, Any] | FactSlot] | None = None, *, title: str = "Sample Property Dossier") -> str:
+def build_private_operations_note(property_id: str, fact_slots: list[dict[str, Any] | FactSlot] | None = None, *, title: str = "123 Example St, Sample City, ST 00000 - Deluxe Dossier") -> str:
     slots = normalize_slots(fact_slots or sample_fact_slots())
     rows_by_section: dict[str, list[str]] = {section: [] for section in PRIVATE_SECTIONS}
     for slot in slots:
@@ -276,37 +300,73 @@ def build_private_operations_note(property_id: str, fact_slots: list[dict[str, A
             if slot.section in rows_by_section:
                 rows_by_section[slot.section].append(_private_row(slot))
         elif slot.state in NEEDS_CONFIRMATION_STATES:
-            rows_by_section["Needs Confirmation"].append(_needs_confirmation_row(slot))
+            target = slot.target_section if slot.target_section in {"Management Notes", "Source / Refresh Notes"} else "Management Notes"
+            rows_by_section[target].append(_needs_confirmation_row(slot))
 
+    rows_by_section["Occupancy & Money"].extend(
+        [
+            "<li><b>YTD bookings:</b> Sample packet keeps bookings, nights, and revenue trend context here without raw guest data.</li>",
+            "<li><b>Trailing context:</b> Occupancy and payout signal should be refreshed before owner reporting.</li>",
+        ]
+    )
     rows_by_section["Current / Upcoming Stays"].extend(
         [
             "<li><b>Current:</b> No current in-house accepted stay in the sample packet.</li>",
             "<li><b>Next 1:</b> Next accepted stay is held in the reservation system; refresh before guest-specific action.</li>",
         ]
     )
-    rows_by_section["Operations Notes"].extend(
+    rows_by_section["Owner & Message Activity"].extend(
         [
-            "<li><b>Access:</b> Confirm the guest code works before a same-day arrival or dispatch.</li>",
-            "<li><b>Turnover:</b> Cleaner role is separate from owner escalation; confirm property name on multi-property threads.</li>",
+            "<li><b>Owner thread:</b> Owner and cleaner message activity is grouped by role before action.</li>",
+            "<li><b>Guest messages:</b> Guest-specific message context stays tied to the reservation before any reply.</li>",
         ]
     )
-    rows_by_section["Business Snapshot"].extend(
+    rows_by_section["Charles Visit Stats"].append(
+        "<li><b>Charles visits:</b> Visit count and last-seen status summarize field recency for this property.</li>"
+    )
+    rows_by_section["Difficulty Ranking"].append(
+        "<li><b>Difficulty:</b> Medium manager difficulty based on access, turnover, and owner-contact complexity.</li>"
+    )
+    rows_by_section["Airbnb / Review Signal"].append(
+        "<li><b>Airbnb reviews:</b> Review/rating signal is summarized here for manager awareness.</li>"
+    )
+    rows_by_section["Recent Notable Events"].extend(
         [
-            "<li><b>YTD bookings:</b> Sample packet keeps booking/night/revenue context here without raw guest data.</li>",
-            "<li><b>Trailing context:</b> Review rating and revenue should be refreshed from reservation tooling before owner reporting.</li>",
+            "<li><b>Recent event:</b> Latest maintenance, guest, or owner item is summarized in manager language.</li>",
         ]
     )
-    rows_by_section["Refresh / Source Coverage"].append(
-        "<li><b>Refresh:</b> Refreshed from current note, locked property records, owner/message sources, reservations, manual/docs, and maintenance artifacts.</li>"
+    rows_by_section["Active Ops Watchlist"].extend(
+        [
+            "<li><b>Watchlist:</b> Confirm access and turnover readiness when the next same-day arrival appears.</li>",
+        ]
+    )
+    rows_by_section["Management Notes"].extend(
+        [
+            "<li><b>Manager note:</b> Keep owner escalation, cleaner dispatch, and guest access facts separated by role.</li>",
+        ]
+    )
+    rows_by_section["Source / Refresh Notes"].append(
+        "<li><b>Refresh:</b> Refreshed from current note, locked property records, owner/message sources, reservations, house manual/docs, and maintenance artifacts.</li>"
     )
 
     body = f"<h1>{html.escape(title, quote=False)}</h1>\n"
-    for section in PRIVATE_SECTIONS:
-        body += _html_section(section, rows_by_section.get(section) or [])
+    for section in PRIVATE_TOP_LEVEL_SECTIONS:
+        if section == "Evidence / Refresh Notes":
+            body += f"<h2>{html.escape(section, quote=False)}</h2>\n"
+            for subsection in EVIDENCE_REFRESH_SUBSECTIONS:
+                body += f"<h3>{html.escape(subsection, quote=False)}</h3>\n<ul>\n"
+                body += "\n".join(rows_by_section.get(subsection) or ["<li>No property-specific rows for this section.</li>"])
+                body += "\n</ul>\n"
+        else:
+            body += _html_section(section, rows_by_section.get(section) or [])
     gate = evaluate_private_operations_note(body, property_id=property_id)
     if not gate["ok"]:
         raise ValueError("private operations note failed semantic gate: " + json.dumps(gate["findings"], ensure_ascii=False))
     return body
+
+
+def build_private_deluxe_dossier_note(property_id: str, fact_slots: list[dict[str, Any] | FactSlot] | None = None, *, title: str = "123 Example St, Sample City, ST 00000 - Deluxe Dossier") -> str:
+    return build_private_operations_note(property_id, fact_slots, title=title)
 
 
 def build_public_audit_artifact(property_id: str, fact_slots: list[dict[str, Any] | FactSlot] | None = None, *, title: str = "Sample Property Dossier") -> str:
