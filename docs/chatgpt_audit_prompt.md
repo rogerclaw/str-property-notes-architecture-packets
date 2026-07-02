@@ -23,20 +23,24 @@ public logs and GitHub artifacts remain redacted.
 
 Please focus on these questions:
 
-1. Where could validator/process/audit language still leak into the private
-   live Apple Note?
-2. Does the current semantic gate prove onsite usefulness, or only absence of
+1. Is the split between `build_private_operations_note(...)` and
+   `build_public_audit_artifact(...)` strong enough, or can public audit rows
+   still leak into the private Apple Note path?
+2. Does the private semantic gate prove onsite usefulness, or only absence of
    known bad phrases?
-3. How should the system enforce the boundary between private live note content
-   and public redacted artifacts?
-4. Are the source-resolution requirements strong enough for conflicting owner
-   emails, missing phone numbers, admin/programming lock codes, and candidate
-   contacts?
+3. Does the required private-note section contract exclude audit/report shape
+   while still allowing useful Refresh / Source Coverage rows?
+4. Are the fact-slot resolution states strong enough for conflicting owner
+   emails, missing phone numbers, admin/programming lock codes, candidate
+   contacts, and cleaner-vs-owner separation?
 5. What tests should be added so a note shaped like an audit report cannot pass
    as a property-manager operations note?
-6. Does the fresh-replace/readback flow adequately prove exactly one active note
-   exists and prior bad notes are archived?
-7. What risks remain before rolling this pattern to other properties?
+6. Does the fresh-replace/readback model adequately prove exactly one active
+   note exists, prior bad notes are archived, the old id is gone, and readback
+   was checked?
+7. Are public redaction checks strong enough to reject raw private codes,
+   Wi-Fi passwords, phones, emails, and source bodies?
+8. What risks remain before rolling this pattern to other properties?
 
 Please return findings in priority order with concrete references to files and
 functions where possible. Recommend specific tests or code changes, but do not

@@ -18,27 +18,34 @@ Apple Note from being published as "verified" again.
 
 Focus areas:
 
-1. Device-visible validation: the semantic gate must run against the live Apple
-   Notes readback body, not only generated HTML or local metadata.
-2. Manager usefulness: section headings alone should not pass if the body is
-   dry-run/process prose, generic filler, source-policy commentary, or
+1. Product separation: `build_private_operations_note(...)` builds the private
+   live Apple Note shape, while `build_public_audit_artifact(...)` builds a
+   shareable audit/log artifact.
+2. Device-visible validation: the private semantic gate must run against the
+   live Apple Notes readback body, not only generated HTML or local metadata.
+3. Manager usefulness: section headings alone should not pass if the private
+   body is dry-run/process prose, generic filler, source-policy commentary, or
    unknown-negative rows.
-3. Source receipts: required source families should be explicitly searched or
-   have an exact unavailable/auth error recorded.
-4. Redaction boundaries: progress/closeout artifacts must not repeat raw
+4. Private-note contract: required private sections are `Access & Codes`,
+   `Wi-Fi / Systems`, `Contacts`, `Other Property Contacts`,
+   `Needs Confirmation`, `Field Basics`, `Current / Upcoming Stays`,
+   `Operations Notes`, `Business Snapshot`, and
+   `Refresh / Source Coverage`.
+5. Fact-slot resolution: source outcomes are explicit states
+   `resolved_verified`, `private_value_present`, `unresolved_conflict`,
+   `missing_after_full_sweep`, `candidate_unconfirmed`, and `not_applicable`.
+6. Redaction boundaries: public progress/closeout/GitHub artifacts may discuss
+   process, gates, source coverage, and conflicts, but must not repeat raw
    access codes, Wi-Fi passwords, private phones, private emails, or source
    bodies.
-5. Publish safety: fresh-replace should archive/rollback safely and verify a
-   single active property note after publish.
-6. Regression tests: tests should cover process-boilerplate, visible HTML,
-   source paths, negative unknown rows, generic filler, and closeout truth.
-7. Private-note boundary: the live Apple Note is a private operations note, so
-   redaction must not strip access, Wi-Fi, contact, or operational facts from
-   the live note. Redaction belongs only in public logs, GitHub packets, and
-   closeouts.
-8. Onsite usability: the live note must read like a property-manager field note
-   for someone standing at the property, not like a validator, audit report,
-   evidence receipt, or process transcript.
+7. Publish safety: fresh-replace must precheck duplicate active notes by exact
+   title plus property marker/address/name, prove archive creation, prove the
+   old id is no longer active, require live readback, run the private semantic
+   gate on readback, and run the public redaction gate on closeout.
+8. Regression tests: tests cover audit-shape rejection, source/process rows,
+   generic filler, Needs Confirmation placement, candidate labeling, owner
+   conflict, access-code separation, redaction placeholders, public redaction,
+   duplicate blocking, archive proof, and live readback.
 
 ## Contents
 
@@ -49,11 +56,14 @@ Focus areas:
 - `docs/incident_redacted.md` - redacted incident artifact.
 - `docs/closeout_redacted.md` - redacted completion evidence.
 - `docs/source_sweep_receipt_redacted.md` - redacted source receipt.
-- `code/property_note_semantic_quality.py` - semantic/usefulness gate.
+- `code/property_note_semantic_quality.py` - private semantic/usefulness gate
+  and public redaction gate.
 - `code/validate_property_note_semantic_quality.py` - CLI wrapper.
 - `code/build_sample_property_live_source_sweep.py` - redacted source-sweep builder.
-- `code/fresh_replace_property_information_note.py` - publish/readback safety path.
-- `code/str_property_fact_registry.py` - redacted fact registry/render gates.
+- `code/fresh_replace_property_information_note.py` - sanitized
+  fresh-replace/readback safety model; no live mutation.
+- `code/str_property_fact_registry.py` - redacted fact-slot registry plus
+  separate private/public builders.
 - `tests/test_property_note_semantic_quality.py` - focused semantic gate tests.
 
 ## Known Caveats
