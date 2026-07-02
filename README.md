@@ -32,10 +32,20 @@ Focus areas:
    single active property note after publish.
 6. Regression tests: tests should cover process-boilerplate, visible HTML,
    source paths, negative unknown rows, generic filler, and closeout truth.
+7. Private-note boundary: the live Apple Note is a private operations note, so
+   redaction must not strip access, Wi-Fi, contact, or operational facts from
+   the live note. Redaction belongs only in public logs, GitHub packets, and
+   closeouts.
+8. Onsite usability: the live note must read like a property-manager field note
+   for someone standing at the property, not like a validator, audit report,
+   evidence receipt, or process transcript.
 
 ## Contents
 
 - `docs/audit_brief.md` - narrative summary and audit prompts.
+- `docs/chatgpt_audit_prompt.md` - copy-paste prompt for an external ChatGPT audit.
+- `docs/private_operations_note_followup.md` - follow-up requirements from the
+  live-note regression.
 - `docs/incident_redacted.md` - redacted incident artifact.
 - `docs/closeout_redacted.md` - redacted completion evidence.
 - `docs/source_sweep_receipt_redacted.md` - redacted source receipt.

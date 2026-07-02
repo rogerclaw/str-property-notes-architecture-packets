@@ -10,6 +10,12 @@ placeholders, and unknown-negative rows.
 The repair changed the acceptance standard: a publish is not complete unless
 the live Apple Notes readback body itself passes semantic/usefulness checks.
 
+A follow-up regression showed that this is still not enough if the note reads
+like a validator, audit packet, evidence receipt, or process transcript. The
+private live note must preserve source-backed operational facts and be useful as
+an onsite field note. Redaction applies to public artifacts, not to the private
+Apple Note.
+
 ## Final State
 
 The repaired run reached:
@@ -31,6 +37,10 @@ backend sync passed, and focused regression tests passed.
 - Redacted closeout/progress artifacts avoid raw private operational values.
 - Unknown optional contacts belong in backend/workbench gaps, not polished
   Apple Note rows.
+- Private live-note rendering preserves source-backed access, Wi-Fi, contact,
+  and operational facts while public artifacts stay redacted.
+- The live-note contract rejects validator/process/audit wording even when the
+  facts are otherwise source-backed.
 
 ## Suggested ChatGPT Audit Questions
 
@@ -45,3 +55,5 @@ backend sync passed, and focused regression tests passed.
    publish risks?
 6. Are redaction gates sufficient for public progress artifacts?
 7. What tests should be added before rolling this to more properties?
+8. What positive structure should prove the live note is actually useful to an
+   onsite property manager?
